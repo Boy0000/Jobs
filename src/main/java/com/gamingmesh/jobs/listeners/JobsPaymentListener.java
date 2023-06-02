@@ -1929,7 +1929,7 @@ public final class JobsPaymentListener implements Listener {
     }
 
     private static final int MAX_ENTRIES = 50;
-    LinkedHashMap<String, UUID> breakCache = new LinkedHashMap<String, UUID>(MAX_ENTRIES + 1, .75F, false) {
+    public static LinkedHashMap<String, UUID> breakCache = new LinkedHashMap<String, UUID>(MAX_ENTRIES + 1, .75F, false) {
         protected boolean removeEldestEntry(Map.Entry<String, UUID> eldest) {
             return size() > MAX_ENTRIES;
         }

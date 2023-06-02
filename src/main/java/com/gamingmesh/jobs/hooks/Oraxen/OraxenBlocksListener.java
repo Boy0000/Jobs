@@ -1,5 +1,6 @@
 package com.gamingmesh.jobs.hooks.Oraxen;
 
+import com.gamingmesh.jobs.CMILib.CMIEnchantment;
 import com.gamingmesh.jobs.Jobs;
 import com.gamingmesh.jobs.actions.BlockActionInfo;
 import com.gamingmesh.jobs.actions.OraxenBlockActionInfo;
@@ -9,6 +10,7 @@ import com.gamingmesh.jobs.listeners.JobsPaymentListener;
 import io.th0rgal.oraxen.api.events.*;
 import io.th0rgal.oraxen.mechanics.Mechanic;
 import net.Zrips.CMILib.CMILib;
+import net.Zrips.CMILib.Container.CMILocation;
 import net.Zrips.CMILib.Items.CMIItemStack;
 import net.Zrips.CMILib.Items.CMIMaterial;
 import net.Zrips.CMILib.Version.Version;
@@ -108,18 +110,19 @@ public class OraxenBlocksListener implements Listener {
         if (!JobsPaymentListener.payForItemDurabilityLoss(player)) return;
 
         // Protection for block break with silktouch
-
-        // Protection for block break with silktouch
         if (Jobs.getGCManager().useSilkTouchProtection) {
             ItemStack item = CMIItemStack.getItemInMainHand(player);
             if (item.getType() != Material.AIR && Jobs.getBpManager().isInBp(block)) {
-                if (item.containsEnchantment(Enchantment.SILK_TOUCH)) {
-                    return;
+                for (Enchantment one : item.getEnchantments().keySet()) {
+                    if (CMIEnchantment.get(one) == CMIEnchantment.SILK_TOUCH) {
+                        return;
+                    }
                 }
             }
         }
 
         Jobs.action(Jobs.getPlayerManager().getJobsPlayer(player), bInfo, block);
+        JobsPaymentListener.breakCache.put(CMILocation.toString(block.getLocation(), ":", true, true), player.getUniqueId());
         Bukkit.broadcast(Component.text("broke oraxen-block"));
     }
 }
