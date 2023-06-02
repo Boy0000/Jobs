@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.gamingmesh.jobs.hooks.HookManager;
+import com.gamingmesh.jobs.hooks.JobsHook;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -222,6 +224,8 @@ public class BlockProtectionManager {
 
     public Integer getBlockDelayTime(Block block) {
         Integer time = Jobs.getRestrictedBlockManager().restrictedBlocksTimer.get(CMIMaterial.get(block));
+        if (time == null && JobsHook.Oraxen.isEnabled()) time =
+                Jobs.getRestrictedBlockManager().restrictedOraxenBlocksTimer.get(HookManager.getOraxenManager().getOraxenBlockFurnitureId(block));
         if (time == null && Jobs.getGCManager().useGlobalTimer) {
             time = Jobs.getGCManager().globalblocktimer;
         }
@@ -229,6 +233,7 @@ public class BlockProtectionManager {
     }
 
     public boolean isInBp(Block block) {
-        return Jobs.getRestrictedBlockManager().restrictedBlocksTimer.containsKey(CMIMaterial.get(block));
+        if (Jobs.getRestrictedBlockManager().restrictedBlocksTimer.containsKey(CMIMaterial.get(block))) return true;
+        else return JobsHook.Oraxen.isEnabled() && Jobs.getRestrictedBlockManager().restrictedOraxenBlocksTimer.containsKey(HookManager.getOraxenManager().getOraxenBlockFurnitureId(block));
     }
 }

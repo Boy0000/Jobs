@@ -1344,7 +1344,46 @@ public final class Jobs extends JavaPlugin {
             } else if (gConfigManager.useGlobalTimer) {
                 getBpManager().add(block, gConfigManager.globalblocktimer);
             }
-        } else if (info.getType() == ActionType.PLACE) {
+        } else if (info.getType() == ActionType.ORAXEN_BREAK) {
+            if (block.hasMetadata("JobsExploit")) {
+                //player.sendMessage("This block is protected using Rukes' system!");
+                return false;
+            }
+
+            BlockProtection bp = getBpManager().getBp(block.getLocation());
+            if (bp != null) {
+                long time = bp.getTime();
+                Integer cd = getBpManager().getBlockDelayTime(block);
+
+                if (time == -1L) {
+                    getBpManager().remove(block);
+                    return false;
+                }
+
+                if (time < System.currentTimeMillis() && bp.getAction() != DBAction.DELETE) {
+                    getBpManager().remove(block);
+                    return true;
+                }
+
+                if ((time > System.currentTimeMillis() || bp.isPaid()) && bp.getAction() != DBAction.DELETE) {
+                    if (inform && player.canGetPaid(info)) {
+                        int sec = Math.round((time - System.currentTimeMillis()) / 1000L);
+                        CMIActionBar.send(player.getPlayer(), lManager.getMessage("message.blocktimer", "[time]", sec));
+                    }
+
+                    return false;
+                }
+
+                getBpManager().add(block, cd);
+
+                if ((cd == null || cd == 0) && gConfigManager.useGlobalTimer) {
+                    getBpManager().add(block, gConfigManager.globalblocktimer);
+                }
+
+            } else if (gConfigManager.useGlobalTimer) {
+                getBpManager().add(block, gConfigManager.globalblocktimer);
+            }
+        }else if (info.getType() == ActionType.PLACE) {
             BlockProtection bp = getBpManager().getBp(block.getLocation());
             if (bp != null) {
                 Long time = bp.getTime();
