@@ -30,6 +30,8 @@ import java.util.TreeMap;
 
 import com.gamingmesh.jobs.hooks.JobsHook;
 import io.th0rgal.oraxen.api.OraxenBlocks;
+import io.th0rgal.oraxen.api.OraxenFurniture;
+import io.th0rgal.oraxen.api.OraxenItems;
 import io.th0rgal.oraxen.utils.logs.Logs;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.bukkit.Bukkit;
@@ -650,7 +652,13 @@ public class ConfigManager {
             return null;
 
         if (JobsHook.Oraxen.isEnabled() && (actionType == ActionType.ORAXEN_PLACE || actionType == ActionType.ORAXEN_BREAK)) {
-            type = myKey;
+            if (OraxenBlocks.isOraxenBlock(myKey) || OraxenFurniture.isFurniture(myKey))
+                type = myKey;
+            else {
+                Jobs.getPluginLogger().warning("Job " + jobName + " has an invalid " + actionType.getName() + " type property: " + myKey
+                        + "! Must be a valid OraxenBlock or OraxenFurniture ID");
+                return null;
+            }
         }
 
 
