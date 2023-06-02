@@ -806,6 +806,10 @@ public final class Jobs extends JavaPlugin {
         if (HookManager.checkMythicMobs()) {
             HookManager.getMythicManager().registerListener();
         }
+
+        if (HookManager.getOraxenManager().check()) {
+            HookManager.getOraxenManager().registerListener();
+        }
     }
 
     public static void reload() {

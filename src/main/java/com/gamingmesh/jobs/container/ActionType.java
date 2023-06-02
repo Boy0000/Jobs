@@ -41,7 +41,9 @@ public enum ActionType {
     EAT("Eat"),
     CUSTOMKILL("custom-kill"),
     COLLECT("Collect"),
-    BAKE("Bake");
+    BAKE("Bake"),
+    ORAXEN_PLACE("OraxenPlace"),
+    ORAXEN_BREAK("OraxenBreak");
 
     private String name;
 

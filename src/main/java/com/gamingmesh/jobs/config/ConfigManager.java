@@ -28,7 +28,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import com.gamingmesh.jobs.hooks.JobsHook;
+import io.th0rgal.oraxen.api.OraxenBlocks;
+import io.th0rgal.oraxen.utils.logs.Logs;
 import org.apache.commons.lang.StringEscapeUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -644,6 +648,11 @@ public class ConfigManager {
 
         if (actionType == ActionType.STRIPLOGS && Version.isCurrentLower(Version.v1_13_R1))
             return null;
+
+        if (JobsHook.Oraxen.isEnabled() && (actionType == ActionType.ORAXEN_PLACE || actionType == ActionType.ORAXEN_BREAK)) {
+            type = myKey;
+        }
+
 
         if (material.getMaterial() != null && material.isAir()) {
             Jobs.getPluginLogger().warning("Job " + jobName + " " + actionType.getName() + " can't recognize material! (" + myKey + ")");
