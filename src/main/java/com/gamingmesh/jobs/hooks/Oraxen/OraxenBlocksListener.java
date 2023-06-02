@@ -1,13 +1,19 @@
 package com.gamingmesh.jobs.hooks.Oraxen;
 
 import com.gamingmesh.jobs.Jobs;
+import com.gamingmesh.jobs.actions.BlockActionInfo;
 import com.gamingmesh.jobs.actions.OraxenBlockActionInfo;
 import com.gamingmesh.jobs.container.ActionType;
 import com.gamingmesh.jobs.container.FastPayment;
 import com.gamingmesh.jobs.listeners.JobsPaymentListener;
 import io.th0rgal.oraxen.api.events.*;
 import io.th0rgal.oraxen.mechanics.Mechanic;
+import net.Zrips.CMILib.CMILib;
 import net.Zrips.CMILib.Items.CMIItemStack;
+import net.Zrips.CMILib.Items.CMIMaterial;
+import net.Zrips.CMILib.Version.Version;
+import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.enchantments.Enchantment;
@@ -17,46 +23,77 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
 
+import static com.gamingmesh.jobs.listeners.JobsPaymentListener.payIfCreative;
+
 public class OraxenBlocksListener implements Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onPlaceJob(OraxenNoteBlockPlaceEvent event) {
-        addJobAction(ActionType.ORAXEN_PLACE, event.getPlayer(), event.getMechanic(), event.getBlock());
+        addJobPlaceAction(event.getPlayer(), event.getItemInHand(), event.getMechanic(), event.getBlock());
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onPlaceJob(OraxenStringBlockPlaceEvent event) {
-        addJobAction(ActionType.ORAXEN_PLACE, event.getPlayer(), event.getMechanic(), event.getBlock());
+        addJobPlaceAction(event.getPlayer(), event.getItemInHand(), event.getMechanic(), event.getBlock());
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onPlaceJob(OraxenFurniturePlaceEvent event) {
-        addJobAction(ActionType.ORAXEN_PLACE, event.getPlayer(), event.getMechanic(), event.getBlock());
+        addJobPlaceAction(event.getPlayer(), event.getItemInHand(), event.getMechanic(), event.getBlock());
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onBreakJob(OraxenNoteBlockBreakEvent event) {
-        addJobAction(ActionType.ORAXEN_BREAK, event.getPlayer(), event.getMechanic(), event.getBlock());
+        addJobBreakAction(event.getPlayer(), event.getMechanic(), event.getBlock());
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onBreakJob(OraxenStringBlockBreakEvent event) {
-        addJobAction(ActionType.ORAXEN_BREAK, event.getPlayer(), event.getMechanic(), event.getBlock());
+        addJobBreakAction(event.getPlayer(), event.getMechanic(), event.getBlock());
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onBreakJob(OraxenFurnitureBreakEvent event) {
-        addJobAction(ActionType.ORAXEN_BREAK, event.getPlayer(), event.getMechanic(), event.getBlock());
+        addJobBreakAction(event.getPlayer(), event.getMechanic(), event.getBlock());
     }
 
-    private void addJobAction(ActionType type, Player player, Mechanic mechanic, Block block) {
+    private void addJobPlaceAction(Player player, ItemStack itemInHand, Mechanic mechanic, Block block) {
+        // A tool should not trigger a BlockPlaceEvent (fixes stripping logs bug #940)
+        // Allow this to trigger with a hoe so players can get paid for farmland.
+        if (CMIMaterial.get(itemInHand.getType()).isTool() && !itemInHand.getType().toString().endsWith("_HOE"))
+            return;
+
+        if (!Jobs.getGCManager().canPerformActionInWorld(block.getWorld()))
+            return;
+
+        if (Version.isCurrentEqualOrLower(Version.v1_12_R1)
+                && CMILib.getInstance().getItemManager().getItem(itemInHand).isSimilar(CMIMaterial.BONE_MEAL.newCMIItemStack()))
+            return;
+
+        // check if player is riding
+        if (Jobs.getGCManager().disablePaymentIfRiding && player.isInsideVehicle())
+            return;
+
+        // check if in creative
+        if (!payIfCreative(player))
+            return;
+
+        if (!Jobs.getPermissionHandler().hasWorldPermission(player, player.getLocation().getWorld().getName()))
+            return;
+
+        OraxenBlockActionInfo bInfo = new OraxenBlockActionInfo(mechanic.getItemID(), ActionType.ORAXEN_PLACE);
+        Jobs.action(Jobs.getPlayerManager().getJobsPlayer(player), bInfo, block);
+        Bukkit.broadcast(Component.text("placed oraxen-block"));
+    }
+
+    private void addJobBreakAction(Player player, Mechanic mechanic, Block block) {
         if (Jobs.getGCManager().disablePaymentIfRiding && player.isInsideVehicle()) return;
 
-        if (!JobsPaymentListener.payIfCreative(player)) return;
+        if (!payIfCreative(player)) return;
 
         if (!Jobs.getPermissionHandler().hasWorldPermission(player, player.getWorld().getName())) return;
 
-        OraxenBlockActionInfo bInfo = new OraxenBlockActionInfo(mechanic.getItemID(), type);
+        OraxenBlockActionInfo bInfo = new OraxenBlockActionInfo(mechanic.getItemID(), ActionType.ORAXEN_BREAK);
 
         FastPayment fp = Jobs.FASTPAYMENT.get(player.getUniqueId());
         if (fp != null) {
@@ -83,5 +120,6 @@ public class OraxenBlocksListener implements Listener {
         }
 
         Jobs.action(Jobs.getPlayerManager().getJobsPlayer(player), bInfo, block);
+        Bukkit.broadcast(Component.text("broke oraxen-block"));
     }
 }
